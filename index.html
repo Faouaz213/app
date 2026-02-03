@@ -10,34 +10,19 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         
-        /* Hide print area on screen */
-        #print-area {
-            display: none;
-        }
+        /* Masquer la zone d'impression sur l'écran */
+        #print-area { display: none; }
 
         /* Configuration Impression Étiquette 40x20mm */
         @media print {
-            @page {
-                size: 40mm 20mm;
-                margin: 0;
-            }
-            html, body {
-                width: 40mm;
-                height: 20mm;
-                margin: 0;
-                padding: 0;
-                background: white;
-            }
-            body > *:not(#print-area) {
-                display: none !important;
-            }
+            @page { size: 40mm 20mm; margin: 0; }
+            html, body { width: 40mm; height: 20mm; margin: 0; padding: 0; background: white; }
+            body > *:not(#print-area) { display: none !important; }
             #print-area {
                 display: flex !important;
                 position: fixed;
-                left: 0;
-                top: 0;
-                width: 40mm;
-                height: 20mm;
+                left: 0; top: 0;
+                width: 40mm; height: 20mm;
                 padding: 1mm;
                 flex-direction: column;
                 justify-content: center;
@@ -74,7 +59,6 @@
         }
     </style>
 
-    <!-- CORRIGÉ : Chemin relatif au lieu de absolu -->
     <link rel="stylesheet" href="index.css">
     
     <script type="importmap">
@@ -90,14 +74,56 @@
     }
     </script>
     
-    <!-- CORRIGÉ : Chemin relatif au lieu de absolu -->
     <script type="module" crossorigin src="assets/index-CTojvn1f.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
-    <!-- Printing template container (Hidden on screen via CSS) -->
+
     <div id="print-area">
       <div id="label-content" style="display: flex; flex-direction: column; align-items: center; width: 100%;"></div>
     </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyD6kb2de2QmX46SO9b5-aB26D39w9-tfdc",
+        authDomain: "repair-phone-db.firebaseapp.com",
+        databaseURL: "https://repair-phone-db-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "repair-phone-db",
+        storageBucket: "repair-phone-db.firebasestorage.app",
+        messagingSenderId: "470640984153",
+        appId: "1:470640984153:web:6807a8ec71a67db0d7f148"
+      };
+
+      // Initialisation
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      // Fonction globale pour sauvegarder depuis ton interface React
+      window.saveToCloud = function(data) {
+        const repairsRef = ref(db, 'reparations');
+        push(repairsRef, {
+          ...data,
+          dateCreation: new Date().toISOString()
+        }).then(() => {
+          console.log("Données sauvegardées sur tous les PC !");
+        }).catch((error) => {
+          console.error("Erreur Cloud:", error);
+        });
+      };
+
+      // Écoute automatique des changements
+      const repairsRef = ref(db, 'reparations');
+      onValue(repairsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            console.log("Mise à jour Cloud reçue :", data);
+            // On peut envoyer un événement pour rafraîchir React si besoin
+            window.dispatchEvent(new CustomEvent('cloudDataUpdate', { detail: data }));
+        }
+      });
+    </script>
 </body>
 </html>
